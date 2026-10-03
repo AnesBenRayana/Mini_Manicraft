@@ -6,6 +6,7 @@ extends CharacterBody3D
 
 const WALK_SPEED := 5.0
 const RUN_SPEED := 8.0
+const FLY_SPEED := 10.0
 const JUMP_VELOCITY := 6.0
 const GRAVITY := 15.0
 
@@ -17,6 +18,12 @@ const MOUSE_SENSITIVITY := 0.004
 
 var camera: Camera3D
 var camera_pitch := 0.0
+
+# =========================
+# FLY MODE
+# =========================
+
+var fly_mode := false
 
 
 func _ready() -> void:
@@ -41,16 +48,37 @@ func _unhandled_input(event: InputEvent) -> void:
 
 		camera.rotation.x = camera_pitch
 
-	# Escape releases the mouse
+	# Keyboard
 	if event is InputEventKey:
-		if event.pressed and event.keycode == KEY_ESCAPE:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		if event.pressed and not event.echo:
+
+			# Escape releases the mouse
+			if event.keycode == KEY_ESCAPE:
+				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+			# F activates/deactivates Fly Mode
+			if event.keycode == KEY_F:
+				fly_mode = not fly_mode
+
+				if fly_mode:
+					print("FLY MODE: ON")
+				else:
+					print("FLY MODE: OFF")
 
 
 func _physics_process(delta: float) -> void:
 
 	# =========================
-	# GRAVITY
+	# FLY MODE
+	# =========================
+
+	if fly_mode:
+		_process_fly_mode()
+		return
+
+
+	# =========================
+	# NORMAL GRAVITY
 	# =========================
 
 	if not is_on_floor():
@@ -97,7 +125,6 @@ func _physics_process(delta: float) -> void:
 	if direction.length() > 0.0:
 		direction = direction.normalized()
 
-		# Follow player's rotation
 		direction = transform.basis * direction
 		direction.y = 0.0
 		direction = direction.normalized()
@@ -112,7 +139,6 @@ func _physics_process(delta: float) -> void:
 	if Input.is_physical_key_pressed(KEY_SHIFT):
 		current_speed = RUN_SPEED
 
-
 	velocity.x = direction.x * current_speed
 	velocity.z = direction.z * current_speed
 
@@ -126,5 +152,49 @@ func _physics_process(delta: float) -> void:
 	# =========================
 	# MOVE
 	# =========================
+
+	move_and_slide()
+
+
+# =========================================================
+# FLY MODE MOVEMENT
+# =========================================================
+
+func _process_fly_mode() -> void:
+
+	var direction := Vector3.ZERO
+
+	# Forward / backward
+	if Input.is_physical_key_pressed(KEY_W):
+		direction -= transform.basis.z
+
+	if Input.is_physical_key_pressed(KEY_S):
+		direction += transform.basis.z
+
+	# Left / right
+	if Input.is_physical_key_pressed(KEY_A):
+		direction -= transform.basis.x
+
+	if Input.is_physical_key_pressed(KEY_D):
+		direction += transform.basis.x
+
+	# Up
+	if Input.is_physical_key_pressed(KEY_SPACE):
+		direction += Vector3.UP
+
+	# Down
+	if Input.is_physical_key_pressed(KEY_CTRL):
+		direction -= Vector3.UP
+
+	if direction.length() > 0.0:
+		direction = direction.normalized()
+
+	var current_speed := FLY_SPEED
+
+	# Shift = faster flying
+	if Input.is_physical_key_pressed(KEY_SHIFT):
+		current_speed = FLY_SPEED * 2.0
+
+	velocity = direction * current_speed
 
 	move_and_slide()
