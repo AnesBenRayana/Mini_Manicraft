@@ -6,14 +6,14 @@ extends CharacterBody3D
 
 const WALK_SPEED := 5.0
 const RUN_SPEED := 8.0
-const JUMP_VELOCITY := 5.0
+const JUMP_VELOCITY := 6.0
 const GRAVITY := 15.0
 
 # =========================
 # CAMERA
 # =========================
 
-const MOUSE_SENSITIVITY := 0.002
+const MOUSE_SENSITIVITY := 0.004
 
 var camera: Camera3D
 var camera_pitch := 0.0
@@ -27,6 +27,7 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+
 	# Mouse movement
 	if event is InputEventMouseMotion:
 		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
@@ -60,7 +61,7 @@ func _physics_process(delta: float) -> void:
 	# JUMP
 	# =========================
 
-	if Input.is_key_pressed(KEY_SPACE) and is_on_floor():
+	if Input.is_physical_key_pressed(KEY_SPACE) and is_on_floor():
 		velocity.y = JUMP_VELOCITY
 
 
@@ -68,10 +69,24 @@ func _physics_process(delta: float) -> void:
 	# MOVEMENT
 	# =========================
 
-	var input_vector := Vector2(
-		Input.get_axis("ui_left", "ui_right"),
-		Input.get_axis("ui_up", "ui_down")
-	)
+	var input_vector := Vector2.ZERO
+
+	if Input.is_physical_key_pressed(KEY_A):
+		input_vector.x -= 1.0
+
+	if Input.is_physical_key_pressed(KEY_D):
+		input_vector.x += 1.0
+
+	if Input.is_physical_key_pressed(KEY_W):
+		input_vector.y -= 1.0
+
+	if Input.is_physical_key_pressed(KEY_S):
+		input_vector.y += 1.0
+
+
+	# =========================
+	# DIRECTION
+	# =========================
 
 	var direction := Vector3(
 		input_vector.x,
@@ -82,10 +97,10 @@ func _physics_process(delta: float) -> void:
 	if direction.length() > 0.0:
 		direction = direction.normalized()
 
-	# Convert movement to player's orientation
-	direction = transform.basis * direction
-	direction.y = 0.0
-	direction = direction.normalized()
+		# Follow player's rotation
+		direction = transform.basis * direction
+		direction.y = 0.0
+		direction = direction.normalized()
 
 
 	# =========================
@@ -94,7 +109,7 @@ func _physics_process(delta: float) -> void:
 
 	var current_speed := WALK_SPEED
 
-	if Input.is_key_pressed(KEY_SHIFT):
+	if Input.is_physical_key_pressed(KEY_SHIFT):
 		current_speed = RUN_SPEED
 
 
@@ -102,7 +117,7 @@ func _physics_process(delta: float) -> void:
 	velocity.z = direction.z * current_speed
 
 
-	# Stop horizontal movement when no key is pressed
+	# Stop horizontal movement
 	if input_vector.length() == 0.0:
 		velocity.x = move_toward(velocity.x, 0.0, WALK_SPEED)
 		velocity.z = move_toward(velocity.z, 0.0, WALK_SPEED)

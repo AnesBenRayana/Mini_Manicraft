@@ -3,7 +3,7 @@ extends Node3D
 const BLOCK_SCENE = preload("res://scenes/blocks/Block.tscn")
 const PLAYER_SCENE = preload("res://scenes/player/Player.tscn")
 
-const WORLD_SIZE := 60
+const WORLD_SIZE := 100
 const MAX_HEIGHT := 8
 const SEED := 12345
 
