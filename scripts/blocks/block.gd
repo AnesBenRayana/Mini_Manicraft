@@ -14,7 +14,15 @@ func _update_appearance() -> void:
 
 	if block_type == "grass":
 		material.albedo_color = Color(0.25, 0.65, 0.20, 1)
+
 	elif block_type == "dirt":
 		material.albedo_color = Color(0.45, 0.30, 0.15, 1)
+
+	elif block_type == "wood":
+		material.albedo_color = Color(0.35, 0.18, 0.07, 1)
+
+	elif block_type == "leaves":
+		material.albedo_color = Color(0.05, 0.30, 0.04, 1)
+	
 
 	mesh.material_override = material
