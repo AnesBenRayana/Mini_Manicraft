@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 
@@ -11,6 +11,13 @@ size = Vector3(0.8, 1.8, 0.8)
 [sub_resource type="CapsuleShape3D" id="CapsuleShape_camera"]
 radius = 0.35
 height = 1.8
+
+[sub_resource type="BoxMesh" id="BoxMesh_hand"]
+size = Vector3(0.35, 0.5, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="HandSkin"]
+albedo_color = Color(0.76, 0.52, 0.36, 1)
+roughness = 0.8
 
 [node name="Player" type="CharacterBody3D"]
 script = ExtResource("1_player")
@@ -26,3 +33,35 @@ position = Vector3(0, 0.9, 0)
 [node name="Camera3D" type="Camera3D" parent="."]
 position = Vector3(0, 1.6, 0)
 current = true
+
+[node name="BlockRayCast" type="RayCast3D" parent="Camera3D"]
+target_position = Vector3(0, 0, -6)
+enabled = true
+collide_with_bodies = true
+collide_with_areas = false
+
+[node name="Hand" type="MeshInstance3D" parent="Camera3D"]
+mesh = SubResource("BoxMesh_hand")
+material_override = SubResource("HandSkin")
+position = Vector3(0.55, -0.55, -0.8)
+
+[node name="CrosshairLayer" type="CanvasLayer" parent="."]
+
+[node name="Crosshair" type="Label" parent="CrosshairLayer"]
+offset_left = 630.0
+offset_top = 345.0
+offset_right = 650.0
+offset_bottom = 375.0
+text = "+"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BlockCounterLayer" type="CanvasLayer" parent="."]
+
+[node name="BlockCounter" type="Label" parent="BlockCounterLayer"]
+offset_left = 0.0
+offset_top = 650.0
+offset_right = 1280.0
+offset_bottom = 700.0
+horizontal_alignment = 1
+vertical_alignment = 1
