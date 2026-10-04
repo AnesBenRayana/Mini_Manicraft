@@ -45,6 +45,7 @@ const BREAK_TIME := 0.5
 # =========================
 
 var block_counter_label: Label
+var block_icon: ColorRect
 
 
 # =========================
@@ -68,21 +69,23 @@ func _ready() -> void:
 	block_raycast = $Camera3D/BlockRayCast
 	hand = $Camera3D/Hand
 
+
 	# =========================
 	# BLOCK COUNTER
 	# =========================
 
-	if has_node("BlockCounterLayer/BlockCounter"):
+	if has_node("BlockCounterLayer/BlockCounterPanel/Multiplier"):
 
-		block_counter_label = $BlockCounterLayer/BlockCounter
+		block_counter_label = $BlockCounterLayer/BlockCounterPanel/Multiplier
+		block_icon = $BlockCounterLayer/BlockCounterPanel/BlockIcon
 
-		block_counter_label.text = "Blocks: 0"
+		block_counter_label.text = "× 0"
 
-		print("BLOCK COUNTER: LABEL TROUVE")
+		print("BLOCK COUNTER: OK")
 
 	else:
 
-		print("ERREUR: BlockCounterLayer/BlockCounter INTROUVABLE")
+		print("ERREUR: COMPTEUR INTROUVABLE")
 
 
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -93,10 +96,6 @@ func _ready() -> void:
 # =========================================================
 
 func _unhandled_input(event: InputEvent) -> void:
-
-	# =========================
-	# MOUSE MOVEMENT
-	# =========================
 
 	if event is InputEventMouseMotion:
 
@@ -117,10 +116,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.rotation.x = camera_pitch
 
 
-	# =========================
-	# MOUSE BUTTON
-	# =========================
-
 	if event is InputEventMouseButton:
 
 		print("MOUSE BUTTON EVENT")
@@ -140,21 +135,15 @@ func _unhandled_input(event: InputEvent) -> void:
 				_stop_breaking()
 
 
-	# =========================
-	# KEYBOARD
-	# =========================
-
 	if event is InputEventKey:
 
 		if event.pressed and not event.echo:
 
-			# ESCAPE
 			if event.keycode == KEY_ESCAPE:
 
 				Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
-			# FLY MODE
 			if event.keycode == KEY_F:
 
 				fly_mode = not fly_mode
@@ -168,20 +157,12 @@ func _unhandled_input(event: InputEvent) -> void:
 					print("FLY MODE: OFF")
 
 
-# =========================================================
-# PHYSICS
-# =========================================================
-
 func _physics_process(delta: float) -> void:
 
 	_check_block_target()
 
 	_process_block_breaking(delta)
 
-
-	# =========================
-	# FLY MODE
-	# =========================
 
 	if fly_mode:
 
@@ -190,18 +171,10 @@ func _physics_process(delta: float) -> void:
 		return
 
 
-	# =========================
-	# GRAVITY
-	# =========================
-
 	if not is_on_floor():
 
 		velocity.y -= GRAVITY * delta
 
-
-	# =========================
-	# JUMP
-	# =========================
 
 	if Input.is_physical_key_pressed(KEY_SPACE):
 
@@ -209,10 +182,6 @@ func _physics_process(delta: float) -> void:
 
 			velocity.y = JUMP_VELOCITY
 
-
-	# =========================
-	# MOVEMENT INPUT
-	# =========================
 
 	var input_vector := Vector2.ZERO
 
@@ -237,10 +206,6 @@ func _physics_process(delta: float) -> void:
 		input_vector.y += 1.0
 
 
-	# =========================
-	# DIRECTION
-	# =========================
-
 	var direction := Vector3(
 		input_vector.x,
 		0.0,
@@ -259,10 +224,6 @@ func _physics_process(delta: float) -> void:
 		direction = direction.normalized()
 
 
-	# =========================
-	# SPEED
-	# =========================
-
 	var current_speed := WALK_SPEED
 
 
@@ -274,10 +235,6 @@ func _physics_process(delta: float) -> void:
 	velocity.x = direction.x * current_speed
 	velocity.z = direction.z * current_speed
 
-
-	# =========================
-	# STOP
-	# =========================
 
 	if input_vector.length() == 0.0:
 
@@ -294,16 +251,8 @@ func _physics_process(delta: float) -> void:
 		)
 
 
-	# =========================
-	# MOVE
-	# =========================
-
 	move_and_slide()
 
-
-# =========================================================
-# BLOCK DETECTION
-# =========================================================
 
 func _check_block_target() -> void:
 
@@ -319,10 +268,6 @@ func _check_block_target() -> void:
 
 		print("BLOCK DETECTED: ", target)
 
-
-# =========================================================
-# START BREAKING
-# =========================================================
 
 func _start_breaking() -> void:
 
@@ -345,10 +290,6 @@ func _start_breaking() -> void:
 		print("START BREAKING")
 
 
-# =========================================================
-# STOP BREAKING
-# =========================================================
-
 func _stop_breaking() -> void:
 
 	if breaking_block != null:
@@ -360,10 +301,6 @@ func _stop_breaking() -> void:
 
 	breaking_progress = 0.0
 
-
-# =========================================================
-# PROCESS BREAKING
-# =========================================================
 
 func _process_block_breaking(delta: float) -> void:
 
@@ -389,16 +326,8 @@ func _process_block_breaking(delta: float) -> void:
 		return
 
 
-	# =========================
-	# INCREASE BREAKING PROGRESS
-	# =========================
-
 	breaking_progress += delta / BREAK_TIME
 
-
-	# =========================
-	# HAND ANIMATION
-	# =========================
 
 	_animate_hand_break()
 
@@ -410,44 +339,39 @@ func _process_block_breaking(delta: float) -> void:
 	)
 
 
-	# =========================
-	# BLOCK DESTROYED
-	# =========================
-
 	if breaking_progress >= 1.0:
 
 		print("BLOCK BROKEN!")
 
+
 		var broken_position: Vector3 = breaking_block.global_position
 
+
 		_create_block_debris(broken_position)
+
 
 		breaking_block.queue_free()
 
 
-		# =========================
-		# ADD BLOCK TO COUNTER
-		# =========================
-
 		blocks_count += 1
+
 
 		print("================================")
 		print("BLOCKS COUNT = ", blocks_count)
 		print("================================")
 
 
-		# =========================
-		# UPDATE COUNTER
-		# =========================
-
 		if block_counter_label != null:
 
 			print("LABEL TROUVE")
 			print("ANCIEN TEXTE = ", block_counter_label.text)
 
-			block_counter_label.text = "Blocks: " + str(blocks_count)
+
+			block_counter_label.text = "× " + str(blocks_count)
+
 
 			print("NOUVEAU TEXTE = ", block_counter_label.text)
+
 
 		else:
 
@@ -458,10 +382,6 @@ func _process_block_breaking(delta: float) -> void:
 
 		breaking_progress = 0.0
 
-
-# =========================================================
-# HAND BREAK ANIMATION
-# =========================================================
 
 func _animate_hand_break() -> void:
 
@@ -477,12 +397,13 @@ func _animate_hand_break() -> void:
 
 	hand_animating = true
 
+
 	var start_position := hand.position
+
 
 	var tween := create_tween()
 
 
-	# Move hand forward
 	tween.tween_property(
 		hand,
 		"position",
@@ -491,7 +412,6 @@ func _animate_hand_break() -> void:
 	)
 
 
-	# Move hand backward
 	tween.tween_property(
 		hand,
 		"position",
@@ -506,17 +426,15 @@ func _animate_hand_break() -> void:
 	)
 
 
-# =========================================================
-# BLOCK DEBRIS
-# =========================================================
-
 func _create_block_debris(block_position: Vector3) -> void:
 
 	for i in range(6):
 
 		var debris := MeshInstance3D.new()
 
+
 		var mesh := BoxMesh.new()
+
 
 		mesh.size = Vector3(
 			0.15,
@@ -524,7 +442,9 @@ func _create_block_debris(block_position: Vector3) -> void:
 			0.15
 		)
 
+
 		debris.mesh = mesh
+
 
 		debris.position = block_position + Vector3(
 			randf_range(-0.35, 0.35),
@@ -532,7 +452,9 @@ func _create_block_debris(block_position: Vector3) -> void:
 			randf_range(-0.35, 0.35)
 		)
 
+
 		var material := StandardMaterial3D.new()
+
 
 		material.albedo_color = Color(
 			0.45,
@@ -540,9 +462,12 @@ func _create_block_debris(block_position: Vector3) -> void:
 			0.18
 		)
 
+
 		debris.material_override = material
 
+
 		get_tree().current_scene.add_child(debris)
+
 
 		var direction := Vector3(
 			randf_range(-1.0, 1.0),
@@ -550,7 +475,9 @@ func _create_block_debris(block_position: Vector3) -> void:
 			randf_range(-1.0, 1.0)
 		).normalized()
 
+
 		var tween := create_tween()
+
 
 		tween.parallel().tween_property(
 			debris,
@@ -559,51 +486,42 @@ func _create_block_debris(block_position: Vector3) -> void:
 			0.4
 		)
 
+
 		tween.tween_callback(
 			debris.queue_free
 		)
 
-
-# =========================================================
-# FLY MODE
-# =========================================================
 
 func _process_fly_mode() -> void:
 
 	var direction := Vector3.ZERO
 
 
-	# FORWARD
 	if Input.is_physical_key_pressed(KEY_W):
 
 		direction -= transform.basis.z
 
 
-	# BACKWARD
 	if Input.is_physical_key_pressed(KEY_S):
 
 		direction += transform.basis.z
 
 
-	# LEFT
 	if Input.is_physical_key_pressed(KEY_A):
 
 		direction -= transform.basis.x
 
 
-	# RIGHT
 	if Input.is_physical_key_pressed(KEY_D):
 
 		direction += transform.basis.x
 
 
-	# UP
 	if Input.is_physical_key_pressed(KEY_SPACE):
 
 		direction += Vector3.UP
 
 
-	# DOWN
 	if Input.is_physical_key_pressed(KEY_CTRL):
 
 		direction -= Vector3.UP
@@ -614,7 +532,6 @@ func _process_fly_mode() -> void:
 		direction = direction.normalized()
 
 
-	# SPEED
 	var current_speed := FLY_SPEED
 
 
@@ -624,5 +541,6 @@ func _process_fly_mode() -> void:
 
 
 	velocity = direction * current_speed
+
 
 	move_and_slide()
