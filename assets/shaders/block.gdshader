@@ -7,6 +7,10 @@ uniform int block_type = 0;
 varying vec3 local_pos;
 
 
+// =========================
+// VERTEX
+// =========================
+
 void vertex() {
 	local_pos = VERTEX;
 }
@@ -146,6 +150,23 @@ void fragment() {
 		);
 	}
 
+
+	// =========================
+	// PLAYER PLACED BLOCK
+	// =========================
+
+	else if (block_type == 4) {
+
+		color = pixel_variation(
+			vec3(0.32, 0.14, 0.05),
+			UV
+		);
+	}
+
+
+	// =========================
+	// FINAL MATERIAL
+	// =========================
 
 	ALBEDO = color;
 

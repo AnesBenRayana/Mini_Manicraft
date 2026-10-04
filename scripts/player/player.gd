@@ -63,6 +63,13 @@ var hand_animating := false
 var fly_mode := false
 
 
+# =========================
+# BUILDING
+# =========================
+
+const BLOCK_SCENE = preload("res://scenes/blocks/Block.tscn")
+
+
 func _ready() -> void:
 
 	camera = $Camera3D
@@ -118,21 +125,30 @@ func _unhandled_input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 
-		print("MOUSE BUTTON EVENT")
+		# =========================
+		# CLIC GAUCHE = CASSER
+		# =========================
 
 		if event.button_index == MOUSE_BUTTON_LEFT:
 
 			if event.pressed:
 
-				print("CLICK GAUCHE DETECTE")
-
 				_start_breaking()
 
 			else:
 
-				print("CLICK GAUCHE RELACHE")
-
 				_stop_breaking()
+
+
+		# =========================
+		# CLIC DROIT = CONSTRUIRE
+		# =========================
+
+		if event.button_index == MOUSE_BUTTON_RIGHT:
+
+			if event.pressed:
+
+				_place_block()
 
 
 	if event is InputEventKey:
@@ -254,6 +270,10 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 
+# =========================================================
+# BLOCK DETECTION
+# =========================================================
+
 func _check_block_target() -> void:
 
 	if not block_raycast.is_colliding():
@@ -266,14 +286,16 @@ func _check_block_target() -> void:
 
 	if target is StaticBody3D:
 
-		print("BLOCK DETECTED: ", target)
+		pass
 
+
+# =========================================================
+# BREAKING
+# =========================================================
 
 func _start_breaking() -> void:
 
 	if not block_raycast.is_colliding():
-
-		print("NO BLOCK TARGET")
 
 		return
 
@@ -286,8 +308,6 @@ func _start_breaking() -> void:
 		breaking_block = target
 
 		breaking_progress = 0.0
-
-		print("START BREAKING")
 
 
 func _stop_breaking() -> void:
@@ -353,35 +373,142 @@ func _process_block_breaking(delta: float) -> void:
 		breaking_block.queue_free()
 
 
+		# =========================
+		# GIVE ONE BLOCK
+		# =========================
+
 		blocks_count += 1
 
 
-		print("================================")
-		print("BLOCKS COUNT = ", blocks_count)
-		print("================================")
+		print(
+			"BLOCKS AVAILABLE = ",
+			blocks_count
+		)
 
 
 		if block_counter_label != null:
 
-			print("LABEL TROUVE")
-			print("ANCIEN TEXTE = ", block_counter_label.text)
-
-
 			block_counter_label.text = "× " + str(blocks_count)
-
-
-			print("NOUVEAU TEXTE = ", block_counter_label.text)
-
-
-		else:
-
-			print("ERREUR: block_counter_label = NULL")
 
 
 		breaking_block = null
 
 		breaking_progress = 0.0
 
+
+# =========================================================
+# BUILDING
+# =========================================================
+
+func _place_block() -> void:
+
+	# =========================
+	# CHECK AVAILABLE BLOCKS
+	# =========================
+
+	if blocks_count <= 0:
+
+		print("NO BLOCKS AVAILABLE")
+
+		return
+
+
+	# =========================
+	# CHECK TARGET
+	# =========================
+
+	if not block_raycast.is_colliding():
+
+		print("NO BLOCK TARGET")
+
+		return
+
+
+	var target = block_raycast.get_collider()
+
+
+	if not target is StaticBody3D:
+
+		return
+
+
+	# =========================
+	# GET BLOCK FACE
+	# =========================
+
+	var normal := block_raycast.get_collision_normal()
+
+	var target_position: Vector3 = target.global_position
+
+	var new_position := target_position + normal
+
+
+	# =========================
+	# GRID ALIGNMENT
+	# =========================
+
+	new_position.x = round(new_position.x)
+	new_position.y = round(new_position.y)
+	new_position.z = round(new_position.z)
+
+
+	# =========================
+	# DON'T PLACE INSIDE PLAYER
+	# =========================
+
+	var distance := new_position.distance_to(global_position)
+
+
+	if distance < 1.0:
+
+		print("BLOCK TOO CLOSE TO PLAYER")
+
+		return
+
+
+	# =========================
+	# CREATE BLOCK
+	# =========================
+
+	var new_block = BLOCK_SCENE.instantiate()
+
+
+	get_tree().current_scene.add_child(new_block)
+
+
+	new_block.global_position = new_position
+
+
+	# =========================
+	# PLAYER PLACED BLOCK
+	# =========================
+
+	if new_block.has_method("set_block_type"):
+
+		new_block.set_block_type("placed")
+
+
+	# =========================
+	# REMOVE ONE AVAILABLE BLOCK
+	# =========================
+
+	blocks_count -= 1
+
+
+	if block_counter_label != null:
+
+		block_counter_label.text = "× " + str(blocks_count)
+
+
+	print(
+		"BLOCK PLACED | BLOCKS LEFT = ",
+		blocks_count
+	)
+
+
+# =========================================================
+# HAND ANIMATION
+# =========================================================
 
 func _animate_hand_break() -> void:
 
@@ -426,22 +553,23 @@ func _animate_hand_break() -> void:
 	)
 
 
+# =========================================================
+# DEBRIS
+# =========================================================
+
 func _create_block_debris(block_position: Vector3) -> void:
 
 	for i in range(6):
 
 		var debris := MeshInstance3D.new()
 
-
 		var mesh := BoxMesh.new()
-
 
 		mesh.size = Vector3(
 			0.15,
 			0.15,
 			0.15
 		)
-
 
 		debris.mesh = mesh
 
@@ -455,13 +583,11 @@ func _create_block_debris(block_position: Vector3) -> void:
 
 		var material := StandardMaterial3D.new()
 
-
 		material.albedo_color = Color(
 			0.45,
 			0.30,
 			0.18
 		)
-
 
 		debris.material_override = material
 
@@ -491,6 +617,10 @@ func _create_block_debris(block_position: Vector3) -> void:
 			debris.queue_free
 		)
 
+
+# =========================================================
+# FLY MODE
+# =========================================================
 
 func _process_fly_mode() -> void:
 

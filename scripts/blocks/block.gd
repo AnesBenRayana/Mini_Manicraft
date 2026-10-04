@@ -2,6 +2,7 @@ extends StaticBody3D
 
 
 var block_type: String = "dirt"
+var is_player_placed: bool = false
 
 
 @onready var mesh: MeshInstance3D = $Mesh
@@ -14,6 +15,9 @@ func set_block_type(type: String) -> void:
 
 	block_type = type
 
+	if type == "placed":
+		is_player_placed = true
+
 	_update_appearance()
 
 
@@ -23,10 +27,6 @@ func _update_appearance() -> void:
 
 	material.shader = block_shader
 
-
-	# =========================
-	# BLOCK TYPE
-	# =========================
 
 	match block_type:
 
@@ -41,6 +41,9 @@ func _update_appearance() -> void:
 
 		"leaves":
 			material.set_shader_parameter("block_type", 3)
+
+		"placed":
+			material.set_shader_parameter("block_type", 4)
 
 
 	mesh.material_override = material
